@@ -78,6 +78,7 @@ class Experiment(Base):
     failure_scenario_id = Column(String(36), ForeignKey("failure_scenarios.id"), nullable=True)
     repetitions_k = Column(Integer, default=3)
     timeout_seconds = Column(Integer, default=180)
+    config_snapshot = Column(JSON, default=dict)
     status = Column(String(30), default="QUEUED", index=True)  # DRAFT, QUEUED, RUNNING, COMPLETED, FAILED, CANCELLED
     source_mode = Column(String(30), nullable=False, default="SIMULATOR") # REAL_EXECUTION, SIMULATOR
     is_demo = Column(Boolean, default=False)
@@ -136,6 +137,8 @@ class Trial(Base):
 
     run = relationship("Run", back_populates="trials")
     trajectory = relationship("Trajectory", back_populates="trial", uselist=False, cascade="all, delete-orphan")
+    tool_events = relationship("ToolEvent", back_populates="trial", cascade="all, delete-orphan")
+    model_requests = relationship("ModelRequestEvent", back_populates="trial", cascade="all, delete-orphan")
 
 
 class Trajectory(Base):
@@ -172,7 +175,7 @@ class ToolEvent(Base):
     meta_info = Column(JSON, default=dict)
     created_at = Column(DateTime, default=utc_now)
 
-    trial = relationship("Trial", backref="tool_events")
+    trial = relationship("Trial", back_populates="tool_events")
 
 
 class ModelRequestEvent(Base):
@@ -193,5 +196,5 @@ class ModelRequestEvent(Base):
     status_code = Column(Integer, default=200)
     created_at = Column(DateTime, default=utc_now)
 
-    trial = relationship("Trial", backref="model_requests")
+    trial = relationship("Trial", back_populates="model_requests")
 

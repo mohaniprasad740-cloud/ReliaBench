@@ -1,12 +1,14 @@
 from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks, Query
 from sqlalchemy.orm import Session
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 import os
 import json
+import uuid
+from datetime import datetime, timezone
 from pathlib import Path
 
 from app.db.session import get_db
-from app.models.entities import Agent, BenchmarkTask, FailureScenario, Experiment, Run, Trial, Trajectory
+from app.models.entities import Agent, BenchmarkTask, FailureScenario, Experiment, Run, Trial, Trajectory, ToolEvent, ModelRequestEvent
 from app.schemas.api import (
     AgentResponse, AgentCreate, AgentUpdate,
     BenchmarkTaskResponse, BenchmarkTaskCreate,
@@ -323,11 +325,147 @@ def create_experiment(exp_in: ExperimentCreate, db: Session = Depends(get_db)):
     if not task:
         raise HTTPException(status_code=400, detail="Invalid benchmark_task_id")
 
-    exp = Experiment(**exp_in.model_dump(), status="QUEUED", source_mode=agent.source_mode)
+    failure = None
+    if exp_in.failure_scenario_id:
+        failure = db.query(FailureScenario).filter(FailureScenario.id == exp_in.failure_scenario_id).first()
+
+    config_snapshot = {
+        "title": exp_in.title,
+        "description": exp_in.description,
+        "repetitions_k": exp_in.repetitions_k,
+        "timeout_seconds": exp_in.timeout_seconds,
+        "seed": 42,
+        "snapshot_timestamp": datetime.now(timezone.utc).isoformat(),
+        "agent": {
+            "id": agent.id,
+            "name": agent.name,
+            "version": agent.version,
+            "framework": agent.framework,
+            "adapter_type": agent.adapter_type,
+            "model_provider": agent.model_provider,
+            "model_name": agent.model_name,
+            "endpoint_url": agent.endpoint_url,
+            "source_mode": agent.source_mode,
+        },
+        "benchmark_task": {
+            "id": task.id,
+            "name": task.name,
+            "version": task.version,
+            "category": task.category,
+            "difficulty": task.difficulty,
+            "verification_method": task.verification_method,
+            "time_limit_seconds": task.time_limit_seconds,
+            "environment_type": task.environment_type,
+            "instruction": task.instruction,
+            "expected_outcome": task.expected_outcome,
+        },
+        "failure_scenario": {
+            "id": failure.id,
+            "name": failure.name,
+            "code": failure.code,
+            "trigger_point": failure.trigger_point,
+            "severity": failure.severity,
+            "parameters": failure.parameters or {},
+        } if failure else None,
+        "integrations": {
+            "bifrost_enabled": settings.ENABLE_BIFROST_GATEWAY,
+            "bifrost_endpoint": settings.BIFROST_ENDPOINT,
+            "tavily_configured": bool(settings.TAVILY_API_KEY),
+            "harbor_required_version": settings.HARBOR_VERSION_REQUIRED,
+        }
+    }
+
+    exp = Experiment(
+        **exp_in.model_dump(),
+        config_snapshot=config_snapshot,
+        status="QUEUED",
+        source_mode=agent.source_mode,
+    )
     db.add(exp)
     db.commit()
     db.refresh(exp)
     return exp
+
+@router.post("/experiments/{experiment_id}/reproduce", response_model=ExperimentResponse, status_code=201)
+def reproduce_experiment(experiment_id: str, db: Session = Depends(get_db)):
+    """Creates a new experiment faithfully derived from an immutable historical configuration snapshot."""
+    orig = db.query(Experiment).filter(Experiment.id == experiment_id).first()
+    if not orig:
+        raise HTTPException(status_code=404, detail="Original experiment not found")
+
+    snapshot = orig.config_snapshot or {}
+    new_title = f"{orig.title} (Reproduced #{str(uuid.uuid4())[:4]})"
+
+    new_exp = Experiment(
+        title=new_title,
+        description=f"Deterministic reproduction of experiment {orig.id}.",
+        agent_id=orig.agent_id,
+        benchmark_task_id=orig.benchmark_task_id,
+        failure_scenario_id=orig.failure_scenario_id,
+        repetitions_k=orig.repetitions_k,
+        timeout_seconds=orig.timeout_seconds,
+        config_snapshot=snapshot,
+        status="QUEUED",
+        source_mode=orig.source_mode,
+    )
+    db.add(new_exp)
+    db.commit()
+    db.refresh(new_exp)
+    return new_exp
+
+@router.get("/experiments/{experiment_id}/events")
+def get_experiment_unified_events(experiment_id: str, db: Session = Depends(get_db)):
+    """Returns chronological timeline combining ModelRequestEvent and ToolEvent across all trials in this experiment."""
+    exp = db.query(Experiment).filter(Experiment.id == experiment_id).first()
+    if not exp:
+        raise HTTPException(status_code=404, detail="Experiment not found")
+
+    events = []
+    for run in exp.runs:
+        for trial in run.trials:
+            for req in getattr(trial, "model_requests", []):
+                events.append({
+                    "event_type": "MODEL_REQUEST",
+                    "event_id": req.id,
+                    "trial_id": trial.id,
+                    "trial_number": trial.trial_number,
+                    "correlation_id": req.correlation_id,
+                    "provider": req.provider,
+                    "model": req.model,
+                    "prompt_tokens": req.prompt_tokens,
+                    "completion_tokens": req.completion_tokens,
+                    "total_tokens": req.total_tokens,
+                    "cost_usd": req.cost_usd,
+                    "latency_ms": req.latency_ms,
+                    "fallback_used": req.fallback_used,
+                    "retry_count": req.retry_count,
+                    "status_code": req.status_code,
+                    "timestamp": req.created_at.isoformat() if req.created_at else None,
+                })
+            for tool in getattr(trial, "tool_events", []):
+                events.append({
+                    "event_type": "TOOL_CALL",
+                    "event_id": tool.id,
+                    "trial_id": trial.id,
+                    "trial_number": trial.trial_number,
+                    "tool_name": tool.tool_name,
+                    "tool_call_id": tool.tool_call_id,
+                    "args": tool.args,
+                    "observation": tool.observation,
+                    "is_error": tool.is_error,
+                    "error_message": tool.error_message,
+                    "latency_ms": tool.latency_ms,
+                    "source": tool.source,
+                    "meta_info": tool.meta_info,
+                    "timestamp": tool.created_at.isoformat() if tool.created_at else None,
+                })
+
+    events.sort(key=lambda e: e.get("timestamp") or "")
+    return {
+        "experiment_id": experiment_id,
+        "total_events": len(events),
+        "events": events,
+    }
 
 @router.get("/experiments/{experiment_id}", response_model=ExperimentResponse)
 def get_experiment(experiment_id: str, db: Session = Depends(get_db)):

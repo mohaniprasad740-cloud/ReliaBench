@@ -141,6 +141,48 @@ class ReliabilityMetricsCalculator:
         }
 
     @staticmethod
+    def calculate_percentiles(values: List[float]) -> Dict[str, Optional[float]]:
+        """
+        Calculates P50 (median), P90, and P95 percentiles for latency / duration metrics.
+        Returns None values when sample size is 0.
+        """
+        if not values:
+            return {"p50": None, "p90": None, "p95": None, "samples": 0}
+
+        sorted_v = sorted(values)
+        n = len(sorted_v)
+
+        def get_percentile(p: float) -> float:
+            if n == 1:
+                return round(sorted_v[0], 2)
+            k = (n - 1) * p
+            f = math.floor(k)
+            c = math.ceil(k)
+            if f == c:
+                return round(sorted_v[int(k)], 2)
+            d0 = sorted_v[int(f)] * (c - k)
+            d1 = sorted_v[int(c)] * (k - f)
+            return round(d0 + d1, 2)
+
+        return {
+            "p50": get_percentile(0.50),
+            "p90": get_percentile(0.90),
+            "p95": get_percentile(0.95),
+            "samples": n
+        }
+
+    @staticmethod
+    def calculate_cost_per_success(total_cost_usd: Optional[float], successful_tasks: int) -> Optional[float]:
+        """
+        Measured Cost per Success = Total Measured Cost / Number of Successful Tasks.
+        Returns None if total_cost_usd is None or successful_tasks <= 0.
+        Never treats missing cost as 0.0.
+        """
+        if total_cost_usd is None or successful_tasks <= 0:
+            return None
+        return round(float(total_cost_usd) / float(successful_tasks), 4)
+
+    @staticmethod
     def aggregate_task_metrics(
         task_results: List[Dict[str, Any]],
         weighting: str = "macro",  # "macro" (unweighted mean across tasks) or "micro" (trial-weighted)

@@ -11,6 +11,7 @@ def run_additive_migrations(engine: Engine) -> None:
     """Safely applies additive schema changes for SQLite / PostgreSQL without vendor-specific PRAGMAs."""
     columns_to_add = [
         ("experiments", "pack_id", "VARCHAR(100)"),
+        ("experiments", "config_snapshot", "JSON"),
         ("runs", "taxonomy_counts", "JSON"),
         ("runs", "remediation_hints", "JSON"),
         ("trials", "taxonomy_category", "VARCHAR(50)"),

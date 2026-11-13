@@ -80,6 +80,38 @@ class ExperimentCreate(BaseModel):
     repetitions_k: int = Field(3, ge=1, le=10)
     timeout_seconds: int = Field(180, ge=10, le=600)
 
+class ToolEventResponse(BaseModel):
+    id: str
+    trial_id: str
+    tool_name: str
+    tool_call_id: Optional[str] = None
+    args: Dict[str, Any] = Field(default_factory=dict)
+    observation: Optional[str] = None
+    is_error: bool = False
+    error_message: Optional[str] = None
+    latency_ms: float = 0.0
+    source: str = "TAVILY"
+    meta_info: Dict[str, Any] = Field(default_factory=dict)
+    created_at: datetime
+    model_config = ConfigDict(from_attributes=True)
+
+class ModelRequestEventResponse(BaseModel):
+    id: str
+    trial_id: str
+    correlation_id: Optional[str] = None
+    provider: str = "bifrost"
+    model: str
+    prompt_tokens: int = 0
+    completion_tokens: int = 0
+    total_tokens: int = 0
+    cost_usd: Optional[float] = None
+    latency_ms: float = 0.0
+    fallback_used: bool = False
+    retry_count: int = 0
+    status_code: int = 200
+    created_at: datetime
+    model_config = ConfigDict(from_attributes=True)
+
 class TrialResponse(BaseModel):
     id: str
     trial_number: int
@@ -89,7 +121,13 @@ class TrialResponse(BaseModel):
     failure_injected: bool
     failure_recovered: bool
     error_message: Optional[str] = None
+    taxonomy_category: Optional[str] = None
+    prompt_tokens: int = 0
+    completion_tokens: int = 0
+    cost_usd: float = 0.0
     source_mode: str
+    tool_events: List[ToolEventResponse] = Field(default_factory=list)
+    model_requests: List[ModelRequestEventResponse] = Field(default_factory=list)
     created_at: datetime
     model_config = ConfigDict(from_attributes=True)
 
@@ -124,6 +162,7 @@ class ExperimentResponse(BaseModel):
     failure_scenario_id: Optional[str] = None
     repetitions_k: int
     timeout_seconds: int
+    config_snapshot: Optional[Dict[str, Any]] = None
     status: str
     source_mode: str
     is_demo: bool
