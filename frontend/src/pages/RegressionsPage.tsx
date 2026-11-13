@@ -126,6 +126,14 @@ export const RegressionsPage: React.FC = () => {
       {/* Regression Case Cards */}
       {loading ? (
         <div className="font-mono text-xs text-[#C7D94C]">[ LOADING REGRESSION GATES... ]</div>
+      ) : cases.length === 0 ? (
+        <div className="reliabench-panel p-10 text-center">
+          <ShieldAlert size={40} className="text-[#89977A] mx-auto mb-4" />
+          <h3 className="text-lg font-bold text-[#E8DDC8] mb-2">No regression cases recorded</h3>
+          <p className="text-xs text-[#A7A393] max-w-lg mx-auto">
+            Regression cases are created when benchmark experiments reveal failure patterns. Run experiments with fault injection to populate the regression gate registry.
+          </p>
+        </div>
       ) : (
         <div className="space-y-4">
           {cases.map((c) => {

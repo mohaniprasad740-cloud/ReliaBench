@@ -51,19 +51,39 @@ def test_api_taxonomy_endpoint():
     assert "priority_order" in data
 
 
-def test_api_regression_endpoints():
+def test_api_regression_endpoints_empty_by_default():
+    """RegressionStore starts empty — no seeded cases in clean state."""
     resp = client.get("/api/v1/regressions")
     assert resp.status_code == 200
     cases = resp.json()
-    assert len(cases) >= 1
+    assert isinstance(cases, list)
+    assert len(cases) == 0
 
-    case_id = cases[0]["id"]
-    # Replay with fragile -> STILL_FAILING
-    r1 = client.post(f"/api/v1/regressions/{case_id}/replay?runner_agent=fragile")
-    assert r1.status_code == 200
-    assert r1.json()["status"] == "STILL_FAILING"
 
-    # Replay with resilient -> FIXED
-    r2 = client.post(f"/api/v1/regressions/{case_id}/replay?runner_agent=resilient")
-    assert r2.status_code == 200
-    assert r2.json()["status"] == "FIXED"
+def test_api_regression_seed_and_replay():
+    """Seed a fixture case explicitly then verify replay works."""
+    from app.api.routes.reliability import regression_store
+
+    # Seed a test fixture case
+    case = regression_store.seed_fixture_case()
+    case_id = case.id
+
+    try:
+        # Verify it appears in the list
+        resp = client.get("/api/v1/regressions")
+        assert resp.status_code == 200
+        cases = resp.json()
+        assert len(cases) >= 1
+
+        # Replay with fragile -> STILL_FAILING
+        r1 = client.post(f"/api/v1/regressions/{case_id}/replay?runner_agent=fragile")
+        assert r1.status_code == 200
+        assert r1.json()["status"] == "STILL_FAILING"
+
+        # Replay with resilient -> FIXED
+        r2 = client.post(f"/api/v1/regressions/{case_id}/replay?runner_agent=resilient")
+        assert r2.status_code == 200
+        assert r2.json()["status"] == "FIXED"
+    finally:
+        # Clean up the seeded case so it doesn't pollute other tests
+        regression_store._cases.pop(case_id, None)

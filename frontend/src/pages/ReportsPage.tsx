@@ -77,6 +77,16 @@ export const ReportsPage: React.FC = () => {
       </div>
 
       {/* Select Experiment */}
+      {experiments.length === 0 ? (
+        <div className="reliabench-panel p-10 text-center">
+          <FileText size={40} className="text-[#89977A] mx-auto mb-4" />
+          <h3 className="text-lg font-bold text-[#E8DDC8] mb-2">No reports available</h3>
+          <p className="text-xs text-[#A7A393] max-w-md mx-auto">
+            Benchmark reports are generated after experiments complete. Run an experiment to generate your first certification report.
+          </p>
+        </div>
+      ) : (
+        <>
       <div className="reliabench-panel p-4 flex items-center gap-3">
         <label className="text-xs font-bold uppercase font-mono text-[#89977A]">
           Select Experiment:
@@ -203,6 +213,8 @@ export const ReportsPage: React.FC = () => {
         <div className="reliabench-panel p-6 font-mono text-xs text-[#89977A]">
           No experiments recorded.
         </div>
+      )}
+        </>
       )}
     </div>
   );

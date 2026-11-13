@@ -121,7 +121,7 @@ export const LandingPage: React.FC = () => {
                 </div>
               </div>
               <div className="text-[11px] font-mono bg-[#171A16] px-2.5 py-1 border border-[#2D332B] text-[#A7A393]">
-                DEMO ILLUSTRATOR · k = 8 ATTEMPTS
+                ILLUSTRATIVE MODEL — NOT EXPERIMENT DATA · k = 8 ATTEMPTS
               </div>
             </div>
 

@@ -20,14 +20,20 @@ class Settings(BaseSettings):
     ENABLE_BIFROST_GATEWAY: bool = False
     BIFROST_ENDPOINT: str = "http://localhost:8080/v1"
 
+    # Execution Plane Worker (optional remote worker endpoint for production)
+    EXECUTION_WORKER_URL: str = ""
+    EXECUTION_WORKER_SECRET: str = ""
+
     class Config:
         env_file = ".env"
         extra = "ignore"
 
 settings = Settings()
 
-# Ensure directories exist
-settings.TRAJECTORIES_DIR.mkdir(parents=True, exist_ok=True)
-settings.LOGS_DIR.mkdir(parents=True, exist_ok=True)
-settings.REPORTS_DIR.mkdir(parents=True, exist_ok=True)
-
+# Ensure directories exist only when filesystem is writable
+try:
+    settings.TRAJECTORIES_DIR.mkdir(parents=True, exist_ok=True)
+    settings.LOGS_DIR.mkdir(parents=True, exist_ok=True)
+    settings.REPORTS_DIR.mkdir(parents=True, exist_ok=True)
+except (OSError, PermissionError):
+    pass

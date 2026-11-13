@@ -56,6 +56,24 @@ export const ComparisonsPage: React.FC = () => {
       </div>
 
       {/* Select Experiments Bar */}
+      {experiments.length === 0 ? (
+        <div className="reliabench-panel p-10 text-center">
+          <GitCompare size={40} className="text-[#89977A] mx-auto mb-4" />
+          <h3 className="text-lg font-bold text-[#E8DDC8] mb-2">No experiments available for comparison</h3>
+          <p className="text-xs text-[#A7A393] max-w-lg mx-auto">
+            Run at least two benchmark experiments on different agents (or the same agent under different conditions) to begin side-by-side reliability comparison.
+          </p>
+        </div>
+      ) : experiments.length === 1 ? (
+        <div className="reliabench-panel p-8 text-center">
+          <GitCompare size={36} className="text-[#C49A55] mx-auto mb-3" />
+          <h3 className="text-base font-bold text-[#E8DDC8] mb-2">One experiment recorded</h3>
+          <p className="text-xs text-[#A7A393] max-w-md mx-auto">
+            Run at least one more benchmark experiment to enable side-by-side comparison.
+          </p>
+        </div>
+      ) : (
+        <>
       <div className="reliabench-panel p-4">
         <div className="text-[10px] uppercase font-bold text-[#89977A] mb-2 font-mono">
           Select Experiments to Compare ({selectedIds.length} Selected)
@@ -227,6 +245,8 @@ export const ComparisonsPage: React.FC = () => {
             </tbody>
           </table>
         </div>
+      )}
+        </>
       )}
     </div>
   );

@@ -93,6 +93,21 @@ export const AgentsPage: React.FC = () => {
 
       {loading ? (
         <div className="font-mono text-xs text-[#C7D94C]">[ QUERYING AGENT REGISTRY... ]</div>
+      ) : agents.length === 0 ? (
+        <div className="reliabench-panel p-10 text-center">
+          <Bot size={40} className="text-[#89977A] mx-auto mb-4" />
+          <h3 className="text-lg font-bold text-[#E8DDC8] mb-2">No agents registered yet</h3>
+          <p className="text-xs text-[#A7A393] mb-6 max-w-md mx-auto">
+            Register your first AI agent to begin benchmarking. You can connect agents via Harbor CLI, a custom REST API, or run them through the deterministic simulator.
+          </p>
+          <button
+            onClick={() => setShowModal(true)}
+            className="reliabench-btn reliabench-btn-persimmon"
+          >
+            <Plus size={15} />
+            <span>Register Your First Agent</span>
+          </button>
+        </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {agents.map((agent) => (

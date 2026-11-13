@@ -272,9 +272,38 @@ def get_benchmark(benchmark_id: str, db: Session = Depends(get_db)):
     return task
 
 # ----------------- FAILURE SCENARIOS -----------------
-@router.get("/failures", response_model=List[FailureScenarioResponse])
+@router.get("/failures")
 def list_failures(db: Session = Depends(get_db)):
-    return db.query(FailureScenario).all()
+    from app.faults.catalog import get_system_failure_catalog
+    # Return the supported system failure scenarios catalog
+    # Also combine with any custom DB failure scenarios if added by users
+    db_failures = db.query(FailureScenario).all()
+    if db_failures:
+        return [
+            {
+                "id": f.id,
+                "name": f.name,
+                "code": f.code,
+                "description": f.description,
+                "trigger_point": f.trigger_point,
+                "severity": f.severity,
+                "parameters": f.parameters,
+            }
+            for f in db_failures
+        ]
+    # Default: system catalog definitions
+    return [
+        {
+            "id": entry.id,
+            "name": entry.name,
+            "code": entry.code,
+            "description": entry.description,
+            "trigger_point": entry.trigger_point,
+            "severity": entry.severity,
+            "parameters": entry.default_parameters,
+        }
+        for entry in get_system_failure_catalog()
+    ]
 
 # ----------------- EXPERIMENTS -----------------
 @router.get("/experiments", response_model=List[ExperimentResponse])
@@ -425,9 +454,16 @@ def get_run_trajectory(run_id: str, db: Session = Depends(get_db)):
     if not traj:
         raise HTTPException(status_code=404, detail="Trajectory record not found for trial")
 
-    if os.path.exists(traj.storage_path):
-        with open(traj.storage_path, "r", encoding="utf-8") as f:
-            return json.load(f)
+    # Use storage abstraction to read trajectory content
+    from app.storage.artifacts import get_artifact_storage
+    storage = get_artifact_storage()
+
+    raw_content = storage.read_artifact(traj.storage_path)
+    if raw_content:
+        try:
+            return json.loads(raw_content)
+        except Exception:
+            pass
     
     return {
         "schema_version": traj.atif_version,

@@ -104,6 +104,27 @@ export const ExperimentsPage: React.FC = () => {
 
       {loading ? (
         <div className="font-mono text-xs text-[#C7D94C]">[ FETCHING BENCHMARK RUNS... ]</div>
+      ) : experiments.length === 0 ? (
+        <div className="reliabench-panel p-10 text-center">
+          <FlaskConical size={40} className="text-[#89977A] mx-auto mb-4" />
+          <h3 className="text-lg font-bold text-[#E8DDC8] mb-2">No experiments executed yet</h3>
+          <p className="text-xs text-[#A7A393] mb-4 max-w-lg mx-auto">
+            Create a benchmark experiment by selecting a registered agent, a challenge pack task, and an optional failure scenario. Each experiment runs <em>k</em> repeated trials to measure reliability.
+          </p>
+          {agents.length === 0 ? (
+            <p className="text-xs text-[#F06B45] font-mono mb-4">
+              ⚠ Register at least one agent before creating experiments.
+            </p>
+          ) : (
+            <button
+              onClick={() => setShowModal(true)}
+              className="reliabench-btn reliabench-btn-persimmon"
+            >
+              <Plus size={14} />
+              <span>Create First Experiment</span>
+            </button>
+          )}
+        </div>
       ) : (
         <div className="space-y-4">
           {experiments.map((exp) => {

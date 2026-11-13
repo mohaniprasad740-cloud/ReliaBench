@@ -59,6 +59,70 @@ export const DashboardPage: React.FC = () => {
     );
   }
 
+  const isEmpty = data.total_experiments === 0 && data.total_agents === 0;
+
+  if (isEmpty) {
+    return (
+      <div className="space-y-8 max-w-7xl mx-auto">
+        {/* Clean-State Onboarding */}
+        <div className="flex flex-col items-center justify-center py-16">
+          <div className="text-[11px] font-mono font-bold uppercase tracking-wider text-[#C7D94C] mb-4">
+            OPERATIONAL WORKSPACE — CLEAN STATE
+          </div>
+          <h1 className="text-3xl font-black text-[#E8DDC8] tracking-tight text-center mb-2">
+            Agent Reliability Overview
+          </h1>
+          <p className="text-sm text-[#A7A393] text-center max-w-lg mb-8">
+            No agents registered and no experiments executed yet. Begin by registering an agent and running your first benchmark.
+          </p>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full max-w-3xl">
+            <Link to="/app/agents" className="reliabench-panel p-6 hover:border-[#C7D94C] transition-colors group cursor-pointer">
+              <Bot size={28} className="text-[#F06B45] mb-3" />
+              <h3 className="font-bold text-sm text-[#E8DDC8] mb-1">Register Your First Agent</h3>
+              <p className="text-xs text-[#A7A393]">
+                Add an agent endpoint, select a framework adapter, and validate connectivity.
+              </p>
+              <span className="text-xs font-mono font-bold text-[#C7D94C] mt-3 flex items-center gap-1 group-hover:underline">
+                Go to Agent Registry <ArrowRight size={12} />
+              </span>
+            </Link>
+
+            <Link to="/app/benchmarks" className="reliabench-panel p-6 hover:border-[#C7D94C] transition-colors group cursor-pointer">
+              <Layers size={28} className="text-[#C49A55] mb-3" />
+              <h3 className="font-bold text-sm text-[#E8DDC8] mb-1">Explore Benchmark Library</h3>
+              <p className="text-xs text-[#A7A393]">
+                Browse {data.total_benchmarks} challenge packs with multi-step tasks and failure scenarios.
+              </p>
+              <span className="text-xs font-mono font-bold text-[#C7D94C] mt-3 flex items-center gap-1 group-hover:underline">
+                View Challenge Packs <ArrowRight size={12} />
+              </span>
+            </Link>
+
+            <div className="reliabench-panel p-6 border-dashed">
+              <Activity size={28} className="text-[#89977A] mb-3" />
+              <h3 className="font-bold text-sm text-[#E8DDC8] mb-1">System Health</h3>
+              <div className="text-xs font-mono space-y-1 text-[#A7A393]">
+                <div className="flex justify-between">
+                  <span>Challenge Packs:</span>
+                  <span className="text-[#C7D94C] font-bold">{data.total_benchmarks} available</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Failure Catalog:</span>
+                  <span className="text-[#C7D94C] font-bold">Active</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Reliability Engine:</span>
+                  <span className="text-[#C7D94C] font-bold">Ready</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-8 max-w-7xl mx-auto">
       {/* Workspace Header & Provenance Mode Selector */}

@@ -64,26 +64,36 @@ export const TracesPage: React.FC = () => {
       </div>
 
       {/* Select Run */}
-      <div className="reliabench-panel p-4 flex flex-wrap gap-2 items-center">
-        <span className="text-[10px] font-mono font-bold text-[#89977A] uppercase mr-2">
-          Select Trial Run:
-        </span>
-        {experiments.flatMap((e) =>
-          e.runs.map((r) => (
-            <button
-              key={r.id}
-              onClick={() => handleSelectRun(r.id)}
-              className={`px-3 py-1.5 text-xs font-mono font-bold rounded border transition-all cursor-pointer ${
-                selectedRunId === r.id
-                  ? 'bg-[#1D211C] text-[#C7D94C] border-[#3B5436] shadow-[2px_2px_0px_0px_#10120F]'
-                  : 'bg-[#141713] text-[#A7A393] border-[#2D332B] hover:border-slate-500'
-              }`}
-            >
-              {e.agent?.name} — Run {r.id.slice(0, 8)} [{r.source_mode}]
-            </button>
-          ))
-        )}
-      </div>
+      {experiments.length === 0 || experiments.flatMap((e) => e.runs).length === 0 ? (
+        <div className="reliabench-panel p-10 text-center">
+          <Terminal size={40} className="text-[#89977A] mx-auto mb-4" />
+          <h3 className="text-lg font-bold text-[#E8DDC8] mb-2">No execution traces recorded</h3>
+          <p className="text-xs text-[#A7A393] max-w-md mx-auto">
+            Execution traces will appear here in ATIF v1.8 format after running a benchmark experiment.
+          </p>
+        </div>
+      ) : (
+        <div className="reliabench-panel p-4 flex flex-wrap gap-2 items-center">
+          <span className="text-[10px] font-mono font-bold text-[#89977A] uppercase mr-2">
+            Select Trial Run:
+          </span>
+          {experiments.flatMap((e) =>
+            e.runs.map((r) => (
+              <button
+                key={r.id}
+                onClick={() => handleSelectRun(r.id)}
+                className={`px-3 py-1.5 text-xs font-mono font-bold rounded border transition-all cursor-pointer ${
+                  selectedRunId === r.id
+                    ? 'bg-[#1D211C] text-[#C7D94C] border-[#3B5436] shadow-[2px_2px_0px_0px_#10120F]'
+                    : 'bg-[#141713] text-[#A7A393] border-[#2D332B] hover:border-slate-500'
+                }`}
+              >
+                {e.agent?.name} — Run {r.id.slice(0, 8)} [{r.source_mode}]
+              </button>
+            ))
+          )}
+        </div>
+      )}
 
       {loading ? (
         <div className="font-mono text-xs text-[#C7D94C]">[ PARSING ATIF TRAJECTORY ARTIFACTS... ]</div>

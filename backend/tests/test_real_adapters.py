@@ -1,10 +1,11 @@
+import sys
 import pytest
 from app.adapters.agents.real_adapters import HttpAgentAdapter, CliAgentAdapter
 
 
 def test_cli_adapter_probe_success():
-    # 'python' or 'echo' or 'sh' is available in Linux
-    adapter = CliAgentAdapter(command_path="python3")
+    # Use sys.executable to ensure probe works portably on both Windows and Linux
+    adapter = CliAgentAdapter(command_path=sys.executable)
     res = adapter.probe()
     assert res.status == "VALIDATED"
     assert "Python" in res.message or "3." in res.message

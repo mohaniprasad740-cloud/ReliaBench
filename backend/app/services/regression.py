@@ -27,14 +27,26 @@ class RegressionCase(BaseModel):
 
 
 class RegressionStore:
-    """In-memory and file-backed regression gate registry."""
+    """In-memory and file-backed regression gate registry.
+    Starts completely clean without fictional default cases.
+    """
 
     def __init__(self):
         self._cases: Dict[str, RegressionCase] = {}
-        self._seed_default_cases()
 
-    def _seed_default_cases(self):
-        default_1 = RegressionCase(
+    def list_cases(self) -> List[RegressionCase]:
+        return list(self._cases.values())
+
+    def get_case(self, case_id: str) -> Optional[RegressionCase]:
+        return self._cases.get(case_id)
+
+    def add_case(self, case: RegressionCase) -> RegressionCase:
+        self._cases[case.id] = case
+        return case
+
+    def seed_fixture_case(self) -> RegressionCase:
+        """Utility for test suites or manual onboarding to seed an isolated test case."""
+        case = RegressionCase(
             id="reg-flaky-triage-tool-contract",
             pack_id="flaky_test_triage",
             agent_name="fragile",
@@ -46,15 +58,6 @@ class RegressionStore:
             description="Fragile agent unhandled crash when quarantine tool fails",
             status="STILL_FAILING",
         )
-        self._cases[default_1.id] = default_1
-
-    def list_cases(self) -> List[RegressionCase]:
-        return list(self._cases.values())
-
-    def get_case(self, case_id: str) -> Optional[RegressionCase]:
-        return self._cases.get(case_id)
-
-    def add_case(self, case: RegressionCase) -> RegressionCase:
         self._cases[case.id] = case
         return case
 
@@ -82,55 +85,52 @@ class RegressionStore:
             probability=1.0,
         )
 
-        scorecard = runner.run_pack(
-            pack=pack,
-            agent=agent,
-            k=1,
-            fault=fault,
-            agent_name=agent_to_test,
-        )
+        scorecard = runner.run_pack(pack=pack, agent=agent, k=1, fault=fault)
 
-        passed = scorecard.pass_rate == 1.0
-        new_status = "FIXED" if passed else "STILL_FAILING"
-        case.status = new_status
-        case.last_replayed_at = datetime.datetime.now(datetime.timezone.utc).isoformat()
+        # Check if the regression reproduces
+        failed = scorecard.pass_rate < 1.0
+        now_str = datetime.datetime.now(datetime.timezone.utc).isoformat()
+        case.last_replayed_at = now_str
+
+        # If it failed with the expected category, it's still failing (regression reproduced)
+        # If it passed, it is FIXED!
+        if scorecard.pass_rate == 1.0:
+            case.status = "FIXED"
+        else:
+            case.status = "STILL_FAILING"
 
         return {
             "case_id": case.id,
-            "status": new_status,
+            "pack_id": case.pack_id,
             "tested_agent": agent_to_test,
+            "status": case.status,
             "pass_rate": scorecard.pass_rate,
-            "taxonomy_counts": scorecard.taxonomy_counts,
-            "scorecard": scorecard.model_dump(),
+            "observed_taxonomy": scorecard.taxonomy_counts,
+            "replayed_at": now_str,
+            "trials": scorecard.trial_results,
         }
 
     def replay_all(self, target_agent: Optional[str] = None) -> Dict[str, Any]:
         results = []
-        fixed_count = 0
-        still_failing_count = 0
-        pack_not_found_count = 0
+        still_failing = 0
+        fixed = 0
 
-        for case_id, case in list(self._cases.items()):
-            try:
-                res = self.replay_case(case_id, runner_agent_name=target_agent)
-                results.append(res)
-                if res["status"] == "FIXED":
-                    fixed_count += 1
-                else:
-                    still_failing_count += 1
-            except FileNotFoundError:
-                pack_not_found_count += 1
-            except Exception as e:
-                still_failing_count += 1
-                results.append({"case_id": case_id, "status": "ERROR", "error": str(e)})
+        for case_id in list(self._cases.keys()):
+            res = self.replay_case(case_id, runner_agent_name=target_agent)
+            results.append(res)
+            if res["status"] == "FIXED":
+                fixed += 1
+            else:
+                still_failing += 1
 
         return {
             "total": len(self._cases),
-            "fixed": fixed_count,
-            "still_failing": still_failing_count,
-            "pack_not_found": pack_not_found_count,
-            "results": results,
+            "still_failing": still_failing,
+            "fixed": fixed,
+            "cases": results,
+            "replayed_at": datetime.datetime.now(datetime.timezone.utc).isoformat(),
         }
 
 
 regression_store = RegressionStore()
+

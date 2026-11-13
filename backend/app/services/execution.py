@@ -238,8 +238,13 @@ class ExecutionService:
                 }
             }
 
-            with open(traj_path, "w", encoding="utf-8") as f:
-                json.dump(atif_data, f, indent=2)
+            # Persist ATIF trajectory using storage abstraction
+            from app.storage.artifacts import get_artifact_storage
+            storage = get_artifact_storage()
+            storage_identifier = storage.save_artifact(
+                relative_path=f"trajectories/{traj_filename}",
+                content=json.dumps(atif_data, indent=2)
+            )
 
             trajectory = Trajectory(
                 trial_id=trial.id,
@@ -250,7 +255,7 @@ class ExecutionService:
                 prompt_tokens=1450,
                 completion_tokens=200,
                 total_cost=0.0036,
-                storage_path=str(traj_path),
+                storage_path=storage_identifier,
                 summary_steps=[
                     {"step": 1, "type": "user_instruction", "desc": "Instruction"},
                     {"step": 2, "type": "tool_call", "tool": "run_shell_command"},

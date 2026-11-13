@@ -44,5 +44,9 @@ def test_fresh_database_bootstrap_and_schema():
         assert "cost_usd" in trials_cols
         assert "prompt_tokens" in trials_cols
     finally:
+        test_engine.dispose()
         if os.path.exists(tmp_path):
-            os.remove(tmp_path)
+            try:
+                os.remove(tmp_path)
+            except OSError:
+                pass
