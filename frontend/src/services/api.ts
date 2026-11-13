@@ -18,6 +18,18 @@ export const api = {
     return res.json();
   },
 
+  async testTavily() {
+    const res = await fetch(`${API_BASE}/integrations/tavily/test`, { method: 'POST' });
+    if (!res.ok) throw new Error('Failed to test Tavily connection');
+    return res.json();
+  },
+
+  async testBifrost() {
+    const res = await fetch(`${API_BASE}/integrations/bifrost/test`, { method: 'POST' });
+    if (!res.ok) throw new Error('Failed to test Bifrost connection');
+    return res.json();
+  },
+
   async getDashboardSummary(sourceMode?: string): Promise<DashboardSummary> {
     const url = sourceMode ? `${API_BASE}/dashboard/summary?source_mode=${sourceMode}` : `${API_BASE}/dashboard/summary`;
     const res = await fetch(url);

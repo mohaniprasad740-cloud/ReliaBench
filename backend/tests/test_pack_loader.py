@@ -4,7 +4,10 @@ from app.benchmarks.pack import list_packs, load_pack_from_file
 
 def test_load_all_challenge_packs():
     packs = list_packs("benchmark_tasks/packs")
-    assert len(packs) == 6
+    assert len(packs) >= 6
+    pack_ids = {p.id for p in packs}
+    assert "tavily_docs_research" in pack_ids
+    assert "tavily_failure_recovery" in pack_ids
     pack_ids = {p.id for p in packs}
     expected = {
         "flaky_test_triage",

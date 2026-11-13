@@ -38,6 +38,9 @@ def health_check():
     from app.benchmarks.pack import list_packs
     packs = list_packs()
 
+    from app.adapters.tools.tavily import tavily_service
+    tavily_info = tavily_service.get_status()
+
     return {
         "status": "healthy",
         "version": "0.1.0",
@@ -47,6 +50,7 @@ def health_check():
         "adapters": {
             "harbor": harbor_info,
             "bifrost": bifrost_info,
+            "tavily": tavily_info,
         },
     }
 
@@ -524,3 +528,18 @@ def compare_experiments(experiment_ids: str, db: Session = Depends(get_db)):
         "is_compatible": is_compatible,
         "compatibility_warning": compatibility_warning
     }
+
+
+# ----------------- INTEGRATION DIAGNOSTICS & PROBES -----------------
+@router.post("/integrations/tavily/test")
+def test_tavily_integration():
+    from app.adapters.tools.tavily import tavily_service
+    status = tavily_service.client.check_connection()
+    return status
+
+
+@router.post("/integrations/bifrost/test")
+def test_bifrost_integration():
+    bifrost_ad = BifrostAdapter()
+    return bifrost_ad.get_status()
+

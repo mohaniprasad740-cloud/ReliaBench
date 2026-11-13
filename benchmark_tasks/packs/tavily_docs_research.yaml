@@ -1,0 +1,46 @@
+id: tavily_docs_research
+name: Technical Documentation Research via Web Search
+category: web_research
+difficulty: medium
+instruction: Use Tavily search to research the latest FastAPI lifespan event syntax from official documentation and produce a verified configuration.
+expected_outcome: FastAPI lifespan syntax discovered and cited accurately with authoritative domain evidence.
+time_limit_seconds: 60
+tags:
+  - web_research
+  - tavily
+  - documentation
+tools:
+  - name: tavily_search
+    description: Search the web via Tavily Search API.
+    latency_ms: 250
+  - name: write_verification_doc
+    description: Save the verified technical finding.
+    latency_ms: 100
+plan:
+  - id: step_1
+    thought: Query Tavily search for FastAPI lifespan documentation.
+    tool: tavily_search
+    args:
+      query: "FastAPI lifespan event contextmanager official docs"
+      include_domains:
+        - "fastapi.tiangolo.com"
+      max_results: 3
+    observation: "Found documentation: @asynccontextmanager async def lifespan(app: FastAPI): yield"
+    requires: null
+  - id: step_2
+    thought: Record verified syntax with authoritative source reference.
+    tool: write_verification_doc
+    args:
+      finding: "lifespan context manager replaces on_event startup"
+      source_domain: "fastapi.tiangolo.com"
+    observation: "Finding written to technical_findings.md with source citation."
+    requires: "FastAPI lifespan"
+validators:
+  - type: tool_called
+    tool: tavily_search
+  - type: tool_called
+    tool: write_verification_doc
+  - type: min_steps
+    value: 2
+  - type: observation_contains
+    value: "Finding written"

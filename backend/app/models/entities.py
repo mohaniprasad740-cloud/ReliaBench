@@ -154,3 +154,44 @@ class Trajectory(Base):
     summary_steps = Column(JSON, default=list)
 
     trial = relationship("Trial", back_populates="trajectory")
+
+
+class ToolEvent(Base):
+    __tablename__ = "tool_events"
+
+    id = Column(String(36), primary_key=True, default=generate_uuid)
+    trial_id = Column(String(36), ForeignKey("trials.id"), nullable=False, index=True)
+    tool_name = Column(String(100), nullable=False)
+    tool_call_id = Column(String(100), nullable=True)
+    args = Column(JSON, default=dict)
+    observation = Column(Text, nullable=True)
+    is_error = Column(Boolean, default=False)
+    error_message = Column(Text, nullable=True)
+    latency_ms = Column(Float, default=0.0)
+    source = Column(String(50), default="TAVILY")  # TAVILY, LOCAL_SHELL, MCP
+    meta_info = Column(JSON, default=dict)
+    created_at = Column(DateTime, default=utc_now)
+
+    trial = relationship("Trial", backref="tool_events")
+
+
+class ModelRequestEvent(Base):
+    __tablename__ = "model_request_events"
+
+    id = Column(String(36), primary_key=True, default=generate_uuid)
+    trial_id = Column(String(36), ForeignKey("trials.id"), nullable=False, index=True)
+    correlation_id = Column(String(100), nullable=True, index=True)
+    provider = Column(String(50), default="bifrost")
+    model = Column(String(100), nullable=False)
+    prompt_tokens = Column(Integer, default=0)
+    completion_tokens = Column(Integer, default=0)
+    total_tokens = Column(Integer, default=0)
+    cost_usd = Column(Float, nullable=True)
+    latency_ms = Column(Float, default=0.0)
+    fallback_used = Column(Boolean, default=False)
+    retry_count = Column(Integer, default=0)
+    status_code = Column(Integer, default=200)
+    created_at = Column(DateTime, default=utc_now)
+
+    trial = relationship("Trial", backref="model_requests")
+

@@ -140,6 +140,42 @@ class ReliabilityMetricsCalculator:
             "samples": count
         }
 
+    @staticmethod
+    def aggregate_task_metrics(
+        task_results: List[Dict[str, Any]],
+        weighting: str = "macro",  # "macro" (unweighted mean across tasks) or "micro" (trial-weighted)
+    ) -> Dict[str, Any]:
+        """Calculates Macro-averaged or Micro-averaged metrics across multiple benchmark tasks."""
+        if not task_results:
+            return {
+                "weighting": weighting,
+                "overall_pass_rate": None,
+                "macro_pass_rate": None,
+                "micro_pass_rate": None,
+                "tasks_count": 0,
+            }
+
+        tasks_count = len(task_results)
+        macro_pass_rates = [t["pass_rate"] for t in task_results if t.get("pass_rate") is not None]
+        macro_pass = sum(macro_pass_rates) / len(macro_pass_rates) if macro_pass_rates else None
+
+        total_successes = sum(t.get("successes", 0) for t in task_results)
+        total_trials = sum(t.get("trials", 0) for t in task_results)
+        micro_pass = (total_successes / total_trials) if total_trials > 0 else None
+
+        chosen_rate = macro_pass if weighting == "macro" else micro_pass
+
+        return {
+            "weighting": weighting,
+            "overall_pass_rate": round(chosen_rate, 4) if chosen_rate is not None else None,
+            "macro_pass_rate": round(macro_pass, 4) if macro_pass is not None else None,
+            "micro_pass_rate": round(micro_pass, 4) if micro_pass is not None else None,
+            "total_successes": total_successes,
+            "total_trials": total_trials,
+            "tasks_count": tasks_count,
+        }
+
+
 
 def calculate_pass_at_k(n: int, c: int, k: int) -> float:
     val = ReliabilityMetricsCalculator.calculate_pass_at_k(n, c, k)

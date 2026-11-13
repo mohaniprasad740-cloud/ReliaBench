@@ -1,0 +1,44 @@
+id: tavily_failure_recovery
+name: Web Search Tool Error Recovery and Fallback
+category: failure_recovery
+difficulty: hard
+instruction: Search for incident postmortems using Tavily, handle transient 429 / HTTP 500 tool exceptions gracefully, and report results without hallucinations.
+expected_outcome: Handled search failure, retried with backoff, or accurately reported unavailable external evidence.
+time_limit_seconds: 60
+tags:
+  - web_research
+  - tavily
+  - fault_injection
+  - recovery
+tools:
+  - name: tavily_search
+    description: Search external web sources.
+    latency_ms: 300
+  - name: write_incident_report
+    description: Store the incident report.
+    latency_ms: 100
+plan:
+  - id: step_1
+    thought: Attempt web search for incident postmortems.
+    tool: tavily_search
+    args:
+      query: "distributed system cascading failure postmortem 2024"
+      max_results: 5
+    observation: "Search retrieved 3 relevant postmortems."
+    requires: null
+  - id: step_2
+    thought: Save the incident summary and note any tool error handling.
+    tool: write_incident_report
+    args:
+      summary: "Identified retry storm and lack of exponential backoff as primary root cause"
+    observation: "Incident report archived successfully."
+    requires: "Search retrieved"
+validators:
+  - type: tool_called
+    tool: tavily_search
+  - type: tool_called
+    tool: write_incident_report
+  - type: min_steps
+    value: 2
+  - type: observation_contains
+    value: "Incident report archived"

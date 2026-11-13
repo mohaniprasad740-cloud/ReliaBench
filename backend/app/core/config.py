@@ -19,6 +19,16 @@ class Settings(BaseSettings):
     HARBOR_BIN_PATH: str = "harbor"
     ENABLE_BIFROST_GATEWAY: bool = False
     BIFROST_ENDPOINT: str = "http://localhost:8080/v1"
+    BIFROST_API_KEY: str = ""
+    BIFROST_ADMIN_API_KEY: str = ""
+    BIFROST_LOGGING_ENABLED: bool = True
+    BIFROST_REQUEST_TIMEOUT: float = 10.0
+
+    # Tavily Web Research Tool
+    TAVILY_API_KEY: str = ""
+    TAVILY_ENABLED: bool = False
+    TAVILY_REQUEST_TIMEOUT: float = 30.0
+    TAVILY_API_BASE: str = "https://api.tavily.com"
 
     # Execution Plane Worker (optional remote worker endpoint for production)
     EXECUTION_WORKER_URL: str = ""

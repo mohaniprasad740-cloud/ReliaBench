@@ -1,16 +1,53 @@
 import React, { useEffect, useState } from 'react';
 import { api } from '../services/api';
-import { Settings as SettingsIcon, ShieldCheck, Terminal, Cpu, Database, CheckCircle2, XCircle } from 'lucide-react';
+import { Settings as SettingsIcon, ShieldCheck, Terminal, Cpu, Database, CheckCircle2, XCircle, Globe, Play } from 'lucide-react';
 
 export const SettingsPage: React.FC = () => {
   const [health, setHealth] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [tavilyTesting, setTavilyTesting] = useState(false);
+  const [tavilyResult, setTavilyResult] = useState<any>(null);
+  const [bifrostTesting, setBifrostTesting] = useState(false);
+  const [bifrostResult, setBifrostResult] = useState<any>(null);
 
-  useEffect(() => {
+  const loadHealth = () => {
+    setLoading(true);
     api.getHealth()
       .then(setHealth)
       .finally(() => setLoading(false));
+  };
+
+  useEffect(() => {
+    loadHealth();
   }, []);
+
+  const handleTestTavily = async () => {
+    setTavilyTesting(true);
+    setTavilyResult(null);
+    try {
+      const res = await api.testTavily();
+      setTavilyResult(res);
+      loadHealth();
+    } catch (err: any) {
+      setTavilyResult({ status: 'ERROR', message: err.message });
+    } finally {
+      setTavilyTesting(false);
+    }
+  };
+
+  const handleTestBifrost = async () => {
+    setBifrostTesting(true);
+    setBifrostResult(null);
+    try {
+      const res = await api.testBifrost();
+      setBifrostResult(res);
+      loadHealth();
+    } catch (err: any) {
+      setBifrostResult({ status: 'ERROR', message: err.message });
+    } finally {
+      setBifrostTesting(false);
+    }
+  };
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
@@ -104,6 +141,80 @@ export const SettingsPage: React.FC = () => {
             <p className="text-[11px] text-[#A7A393] font-sans">
               Bifrost provides unified OpenAI-compatible routing and microsecond-level request accounting. It is optional for the initial milestone and can be enabled via <code className="text-[#C7D94C]">ENABLE_BIFROST_GATEWAY=true</code>.
             </p>
+
+            <div className="pt-2 border-t border-[#2D332B] flex justify-between items-center">
+              <button
+                onClick={handleTestBifrost}
+                disabled={bifrostTesting}
+                className="reliabench-btn reliabench-btn-persimmon text-xs py-1 px-3 flex items-center gap-1.5 cursor-pointer"
+              >
+                <Play size={12} />
+                <span>{bifrostTesting ? 'Testing Gateway...' : 'Test Connection'}</span>
+              </button>
+              {bifrostResult && (
+                <span className={`text-[10px] font-mono ${bifrostResult.status === 'READY' ? 'text-[#C7D94C]' : 'text-[#89977A]'}`}>
+                  {bifrostResult.message || bifrostResult.status}
+                </span>
+              )}
+            </div>
+          </div>
+
+          {/* Web Research Tool (Tavily) */}
+          <div className="reliabench-panel p-6 space-y-4">
+            <div className="flex justify-between items-center pb-3 border-b border-[#2D332B]">
+              <div className="flex items-center gap-2">
+                <Globe size={18} className="text-[#C7D94C]" />
+                <h3 className="font-bold text-[#E8DDC8] text-base font-mono">Tavily Web Research Tool</h3>
+              </div>
+              <span
+                className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold ${
+                  health.adapters.tavily?.configured
+                    ? 'bg-[#1D2B1C] text-[#C7D94C] border border-[#3B5436]'
+                    : 'bg-[#2B231D] text-[#89977A] border border-[#2D332B]'
+                }`}
+              >
+                {health.adapters.tavily?.status || 'NOT_CONFIGURED'}
+              </span>
+            </div>
+
+            <div className="space-y-2 text-xs font-mono">
+              <div className="flex justify-between py-1.5 border-b border-[#2D332B]/40 text-[#89977A]">
+                <span>Status:</span>
+                <span className={health.adapters.tavily?.configured ? 'text-[#C7D94C]' : 'text-[#89977A]'}>
+                  {health.adapters.tavily?.configured ? 'READY' : 'NOT CONFIGURED'}
+                </span>
+              </div>
+              <div className="flex justify-between py-1.5 border-b border-[#2D332B]/40 text-[#89977A]">
+                <span>Credentials:</span>
+                <span className="text-[#E8DDC8]">
+                  {health.adapters.tavily?.has_credentials ? 'Configured in Environment (Hidden)' : 'Credentials not configured'}
+                </span>
+              </div>
+              <div className="flex justify-between py-1.5 text-[#89977A]">
+                <span>Search Endpoint:</span>
+                <span className="text-[#A7A393]">{health.adapters.tavily?.api_base || 'https://api.tavily.com'}</span>
+              </div>
+            </div>
+
+            <p className="text-[11px] text-[#A7A393] font-sans">
+              Tavily powers grounded web-research benchmark tasks. Agents can query real authoritative sources and verify findings. Configure <code className="text-[#C7D94C]">TAVILY_API_KEY</code> on the server to activate.
+            </p>
+
+            <div className="pt-2 border-t border-[#2D332B] flex justify-between items-center">
+              <button
+                onClick={handleTestTavily}
+                disabled={tavilyTesting}
+                className="reliabench-btn reliabench-btn-lime text-xs py-1 px-3 flex items-center gap-1.5 cursor-pointer"
+              >
+                <Play size={12} />
+                <span>{tavilyTesting ? 'Probing Tavily API...' : 'Test Connection'}</span>
+              </button>
+              {tavilyResult && (
+                <span className={`text-[10px] font-mono ${tavilyResult.status === 'READY' ? 'text-[#C7D94C]' : 'text-[#F06B45]'}`}>
+                  {tavilyResult.message || tavilyResult.status}
+                </span>
+              )}
+            </div>
           </div>
 
           {/* Storage & Database Diagnostics */}
