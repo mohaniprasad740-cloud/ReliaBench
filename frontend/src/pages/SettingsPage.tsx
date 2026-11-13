@@ -51,7 +51,7 @@ export const SettingsPage: React.FC = () => {
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
-      <div className="pb-6 border-b border-[#2D332B]">
+      <div data-tour="settings-header" className="pb-6 border-b border-[#2D332B]">
         <h1 className="text-2xl font-black text-[#E8DDC8] flex items-center gap-2">
           <SettingsIcon size={26} className="text-[#89977A]" />
           <span>System Diagnostics & Adapters</span>
@@ -112,7 +112,7 @@ export const SettingsPage: React.FC = () => {
           </div>
 
           {/* Model Gateway (Bifrost) */}
-          <div className="reliabench-panel p-6 space-y-4">
+          <div data-tour="settings-bifrost-card" className="reliabench-panel p-6 space-y-4">
             <div className="flex justify-between items-center pb-3 border-b border-[#2D332B]">
               <div className="flex items-center gap-2">
                 <Cpu size={18} className="text-[#F06B45]" />
@@ -160,7 +160,7 @@ export const SettingsPage: React.FC = () => {
           </div>
 
           {/* Web Research Tool (Tavily) */}
-          <div className="reliabench-panel p-6 space-y-4">
+          <div data-tour="settings-tavily-card" className="reliabench-panel p-6 space-y-4">
             <div className="flex justify-between items-center pb-3 border-b border-[#2D332B]">
               <div className="flex items-center gap-2">
                 <Globe size={18} className="text-[#C7D94C]" />

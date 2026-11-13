@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { api } from '../services/api';
 import { DashboardSummary } from '../services/types';
+import { useGuidedTour } from '../components/tour';
 import {
   CheckCircle2,
   AlertTriangle,
@@ -11,7 +12,8 @@ import {
   ArrowRight,
   ShieldAlert,
   SlidersHorizontal,
-  Flame
+  Flame,
+  Compass
 } from 'lucide-react';
 import {
   BarChart,
@@ -29,6 +31,7 @@ export const DashboardPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [sourceFilter, setSourceFilter] = useState<string>('ALL');
+  const { startTour } = useGuidedTour();
 
   useEffect(() => {
     loadSummary(sourceFilter === 'ALL' ? undefined : sourceFilter);
@@ -65,18 +68,35 @@ export const DashboardPage: React.FC = () => {
     return (
       <div className="space-y-8 max-w-7xl mx-auto">
         {/* Clean-State Onboarding */}
-        <div className="flex flex-col items-center justify-center py-16">
+        <div data-tour="dashboard-header" className="flex flex-col items-center justify-center py-16">
           <div className="text-[11px] font-mono font-bold uppercase tracking-wider text-[#C7D94C] mb-4">
             OPERATIONAL WORKSPACE — CLEAN STATE
           </div>
           <h1 className="text-3xl font-black text-[#E8DDC8] tracking-tight text-center mb-2">
             Agent Reliability Overview
           </h1>
-          <p className="text-sm text-[#A7A393] text-center max-w-lg mb-8">
-            No agents registered and no experiments executed yet. Begin by registering an agent and running your first benchmark.
+          <p className="text-sm text-[#A7A393] text-center max-w-lg mb-6">
+            No agents registered and no experiments executed yet. Begin by registering an agent, exploring benchmark tasks, or taking the guided product tour.
           </p>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full max-w-3xl">
+          <div className="flex gap-3 mb-8">
+            <button
+              onClick={() => startTour(0)}
+              className="reliabench-btn reliabench-btn-persimmon flex items-center gap-2 cursor-pointer"
+            >
+              <Compass size={15} />
+              <span>Start Guided Tour</span>
+            </button>
+            <Link
+              to="/app/agents"
+              className="reliabench-btn reliabench-btn-outline flex items-center gap-2"
+            >
+              <Bot size={15} />
+              <span>Register First Agent</span>
+            </Link>
+          </div>
+
+          <div data-tour="dashboard-metrics-strip" className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full max-w-3xl">
             <Link to="/app/agents" className="reliabench-panel p-6 hover:border-[#C7D94C] transition-colors group cursor-pointer">
               <Bot size={28} className="text-[#F06B45] mb-3" />
               <h3 className="font-bold text-sm text-[#E8DDC8] mb-1">Register Your First Agent</h3>
@@ -126,7 +146,7 @@ export const DashboardPage: React.FC = () => {
   return (
     <div className="space-y-8 max-w-7xl mx-auto">
       {/* Workspace Header & Provenance Mode Selector */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 pb-6 border-b border-[#2D332B]">
+      <div data-tour="dashboard-header" className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 pb-6 border-b border-[#2D332B]">
         <div>
           <div className="flex items-center gap-2 mb-1">
             <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-[#C7D94C]">
@@ -146,7 +166,17 @@ export const DashboardPage: React.FC = () => {
         </div>
 
         {/* Source Mode Filter Toggle */}
-        <div className="flex items-center gap-2 bg-[#141713] p-1 border border-[#2D332B] rounded">
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => startTour(0)}
+            className="reliabench-btn reliabench-btn-outline text-xs py-1.5 px-3 flex items-center gap-1.5"
+            title="Start Guided Product Tour"
+          >
+            <Compass size={14} className="text-[#C7D94C]" />
+            <span>Product Tour</span>
+          </button>
+
+          <div className="flex items-center gap-2 bg-[#141713] p-1 border border-[#2D332B] rounded">
           <SlidersHorizontal size={14} className="text-[#89977A] ml-2" />
           <button
             onClick={() => setSourceFilter('ALL')}
@@ -179,10 +209,11 @@ export const DashboardPage: React.FC = () => {
             Real Verified Runs
           </button>
         </div>
+        </div>
       </div>
 
       {/* Primary Analytical Metrics Strip */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+      <div data-tour="dashboard-metrics-strip" className="grid grid-cols-2 md:grid-cols-5 gap-4">
         {/* Pass Rate */}
         <div className="reliabench-panel p-4 border-l-3 border-l-[#C7D94C]">
           <div className="text-[10px] uppercase font-bold text-[#A7A393] font-mono">

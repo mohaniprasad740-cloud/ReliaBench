@@ -63,7 +63,7 @@ export const RegressionsPage: React.FC = () => {
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
       {/* Header */}
-      <div className="flex flex-col md:flex-row justify-between md:items-center gap-4 pb-6 border-b border-[#2D332B]">
+      <div data-tour="regressions-header" className="flex flex-col md:flex-row justify-between md:items-center gap-4 pb-6 border-b border-[#2D332B]">
         <div>
           <div className="flex items-center gap-3">
             <h1 className="text-2xl font-black text-[#E8DDC8] flex items-center gap-2">

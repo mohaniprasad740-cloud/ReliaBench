@@ -45,7 +45,7 @@ export const ComparisonsPage: React.FC = () => {
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
-      <div className="pb-6 border-b border-[#2D332B]">
+      <div data-tour="comparison-header" className="pb-6 border-b border-[#2D332B]">
         <h1 className="text-2xl font-black text-[#E8DDC8] flex items-center gap-2">
           <GitCompare size={26} className="text-[#C49A55]" />
           <span>Agent Comparison Matrix</span>

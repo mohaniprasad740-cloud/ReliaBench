@@ -1,6 +1,7 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Layout } from './components/layout/Layout';
+import { GuidedTourProvider, GuidedTourOverlay } from './components/tour';
 import { LandingPage } from './pages/LandingPage';
 import { DashboardPage } from './pages/DashboardPage';
 import { AgentsPage } from './pages/AgentsPage';
@@ -16,7 +17,9 @@ import { SettingsPage } from './pages/SettingsPage';
 export const App: React.FC = () => {
   return (
     <BrowserRouter>
-      <Routes>
+      <GuidedTourProvider>
+        <GuidedTourOverlay />
+        <Routes>
         {/* PUBLIC DEDICATED EDITORIAL LANDING PAGE */}
         <Route path="/" element={<LandingPage />} />
 
@@ -45,6 +48,7 @@ export const App: React.FC = () => {
 
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
+      </GuidedTourProvider>
     </BrowserRouter>
   );
 };

@@ -72,7 +72,7 @@ export const AgentsPage: React.FC = () => {
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
-      <div className="flex justify-between items-center pb-6 border-b border-[#2D332B]">
+      <div data-tour="agents-header" className="flex justify-between items-center pb-6 border-b border-[#2D332B]">
         <div>
           <h1 className="text-2xl font-black text-[#E8DDC8] flex items-center gap-2">
             <Bot size={26} className="text-[#F06B45]" />
@@ -83,6 +83,7 @@ export const AgentsPage: React.FC = () => {
           </p>
         </div>
         <button
+          data-tour="agents-register-btn"
           onClick={() => setShowModal(true)}
           className="reliabench-btn reliabench-btn-persimmon"
         >

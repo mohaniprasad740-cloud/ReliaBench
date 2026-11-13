@@ -66,7 +66,7 @@ export const BenchmarksPage: React.FC = () => {
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
       {/* Top Header */}
-      <div className="flex justify-between items-center pb-6 border-b border-[#2D332B]">
+      <div data-tour="benchmarks-header" className="flex justify-between items-center pb-6 border-b border-[#2D332B]">
         <div>
           <div className="flex items-center gap-3">
             <h1 className="text-2xl font-black text-[#E8DDC8] flex items-center gap-2">
@@ -186,7 +186,7 @@ export const BenchmarksPage: React.FC = () => {
                 </div>
 
                 {/* Run Launcher Form */}
-                <div className="bg-[#181C17] p-5 rounded border border-[#C49A55]/40 space-y-4">
+                <div data-tour="benchmarks-run-card" className="bg-[#181C17] p-5 rounded border border-[#C49A55]/40 space-y-4">
                   <div className="flex items-center justify-between">
                     <h3 className="text-sm font-bold text-[#E8DDC8] font-mono uppercase flex items-center gap-2">
                       <Zap size={16} className="text-[#C7D94C]" />

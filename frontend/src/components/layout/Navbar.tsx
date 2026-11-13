@@ -1,6 +1,7 @@
 import React from 'react';
-import { Terminal, Zap, ExternalLink, ArrowLeft } from 'lucide-react';
+import { Terminal, Zap, ExternalLink, ArrowLeft, HelpCircle } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { useGuidedTour } from '../tour';
 
 interface NavbarProps {
   activeMode?: string;
@@ -12,6 +13,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   sourceMode = 'SIMULATOR'
 }) => {
   const isSimulator = activeMode.includes('SIMULATOR') || sourceMode === 'SIMULATOR';
+  const { startTour } = useGuidedTour();
 
   return (
     <header className="h-16 bg-[#171A16] border-b border-[#2D332B] px-6 flex items-center justify-between sticky top-0 z-40">
@@ -43,6 +45,16 @@ export const Navbar: React.FC<NavbarProps> = ({
       </div>
 
       <div className="flex items-center gap-4">
+        {/* Interactive Tour Trigger */}
+        <button
+          onClick={() => startTour(0)}
+          className="flex items-center gap-1.5 text-xs font-mono font-bold text-[#C7D94C] hover:text-[#d7e85c] px-2.5 py-1.5 rounded bg-[#1D2B1C] border border-[#3B5436] transition-colors cursor-pointer"
+          title="Start Guided Product Tour"
+        >
+          <HelpCircle size={14} />
+          <span className="hidden sm:inline">Product Tour</span>
+        </button>
+
         <div className="flex items-center gap-2 bg-[#1D211C] border border-[#2D332B] px-3 py-1.5 text-xs text-[#A7A393] font-mono">
           <Terminal size={13} className="text-[#C7D94C]" />
           <span>v0.2.0-beta</span>

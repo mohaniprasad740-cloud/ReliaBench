@@ -74,7 +74,7 @@ export const ExperimentsPage: React.FC = () => {
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
-      <div className="flex justify-between items-center pb-6 border-b border-[#2D332B]">
+      <div data-tour="experiments-header" className="flex justify-between items-center pb-6 border-b border-[#2D332B]">
         <div>
           <h1 className="text-2xl font-black text-[#E8DDC8] flex items-center gap-2">
             <FlaskConical size={26} className="text-[#F06B45]" />
