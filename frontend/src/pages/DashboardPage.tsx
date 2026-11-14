@@ -13,7 +13,12 @@ import {
   ShieldAlert,
   SlidersHorizontal,
   Flame,
-  Compass
+  Compass,
+  Database,
+  Cpu,
+  Server,
+  Search,
+  HardDrive
 } from 'lucide-react';
 import {
   BarChart,
@@ -28,10 +33,15 @@ import { Link } from 'react-router-dom';
 
 export const DashboardPage: React.FC = () => {
   const [data, setData] = useState<DashboardSummary | null>(null);
+  const [health, setHealth] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [sourceFilter, setSourceFilter] = useState<string>('ALL');
   const { startTour } = useGuidedTour();
+
+  useEffect(() => {
+    api.getHealth().then(setHealth).catch(() => {});
+  }, []);
 
   useEffect(() => {
     loadSummary(sourceFilter === 'ALL' ? undefined : sourceFilter);
@@ -124,16 +134,26 @@ export const DashboardPage: React.FC = () => {
               <h3 className="font-bold text-sm text-[#E8DDC8] mb-1">System Health</h3>
               <div className="text-xs font-mono space-y-1 text-[#A7A393]">
                 <div className="flex justify-between">
+                  <span>Harbor Runtime:</span>
+                  <span className={data.harbor_status?.available ? "text-[#C7D94C] font-bold" : "text-[#C49A55] font-bold"}>
+                    {data.harbor_status?.available ? "CLI Ready" : "Deterministic"}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Bifrost Gateway:</span>
+                  <span className={health?.adapters?.bifrost?.configured ? "text-[#C7D94C] font-bold" : "text-[#89977A] font-bold"}>
+                    {health?.adapters?.bifrost?.configured ? "Active" : "Mock"}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Tavily Search:</span>
+                  <span className={health?.adapters?.tavily?.configured ? "text-[#C7D94C] font-bold" : "text-[#89977A] font-bold"}>
+                    {health?.adapters?.tavily?.configured ? "Connected" : "Mock"}
+                  </span>
+                </div>
+                <div className="flex justify-between">
                   <span>Challenge Packs:</span>
                   <span className="text-[#C7D94C] font-bold">{data.total_benchmarks} available</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Failure Catalog:</span>
-                  <span className="text-[#C7D94C] font-bold">Active</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Reliability Engine:</span>
-                  <span className="text-[#C7D94C] font-bold">Ready</span>
                 </div>
               </div>
             </div>
@@ -209,6 +229,59 @@ export const DashboardPage: React.FC = () => {
             Real Verified Runs
           </button>
         </div>
+        </div>
+      </div>
+
+      {/* System Health & Adapter Topology Strip */}
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-3 p-3 bg-[#111310] border border-[#2D332B] rounded">
+        <div className="flex items-center gap-2.5">
+          <Database size={15} className="text-[#C7D94C] shrink-0" />
+          <div className="min-w-0">
+            <div className="text-[10px] uppercase font-mono text-[#89977A] font-bold truncate">Database</div>
+            <div className="text-xs font-mono font-bold text-[#E8DDC8] truncate">
+              {health?.database === 'connected' ? 'Connected' : 'Active (SQLite)'}
+            </div>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2.5">
+          <Cpu size={15} className={data.harbor_status?.available ? "text-[#C7D94C] shrink-0" : "text-[#C49A55] shrink-0"} />
+          <div className="min-w-0">
+            <div className="text-[10px] uppercase font-mono text-[#89977A] font-bold truncate">Harbor Runtime</div>
+            <div className="text-xs font-mono font-bold text-[#E8DDC8] truncate">
+              {data.harbor_status?.available ? 'Harbor CLI Ready' : 'Deterministic Mode'}
+            </div>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2.5">
+          <Server size={15} className={health?.adapters?.bifrost?.configured ? "text-[#C7D94C] shrink-0" : "text-[#89977A] shrink-0"} />
+          <div className="min-w-0">
+            <div className="text-[10px] uppercase font-mono text-[#89977A] font-bold truncate">Bifrost Gateway</div>
+            <div className="text-xs font-mono font-bold text-[#E8DDC8] truncate">
+              {health?.adapters?.bifrost?.configured ? 'Active (Telemetry)' : 'Direct / Mock'}
+            </div>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2.5">
+          <Search size={15} className={health?.adapters?.tavily?.configured ? "text-[#C7D94C] shrink-0" : "text-[#89977A] shrink-0"} />
+          <div className="min-w-0">
+            <div className="text-[10px] uppercase font-mono text-[#89977A] font-bold truncate">Tavily Search</div>
+            <div className="text-xs font-mono font-bold text-[#E8DDC8] truncate">
+              {health?.adapters?.tavily?.configured ? 'API Connected' : 'Mock Cache'}
+            </div>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2.5">
+          <HardDrive size={15} className="text-[#C7D94C] shrink-0" />
+          <div className="min-w-0">
+            <div className="text-[10px] uppercase font-mono text-[#89977A] font-bold truncate">Artifact Storage</div>
+            <div className="text-xs font-mono font-bold text-[#E8DDC8] truncate">
+              Local / Vercel Blob
+            </div>
+          </div>
         </div>
       </div>
 
