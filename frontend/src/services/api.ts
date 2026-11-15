@@ -206,6 +206,33 @@ export const api = {
     const res = await fetch(url, { method: 'POST' });
     if (!res.ok) throw new Error('Failed to replay all regressions');
     return res.json();
+  },
+
+  // Demo Environment
+  async getDemoStatus(): Promise<{
+    seeded: boolean;
+    agents_count: number;
+    tasks_count: number;
+    experiments_count: number;
+    trials_count: number;
+    mode: string;
+    canonical_agents: string[];
+  }> {
+    const res = await fetch(`${API_BASE}/demo/status`);
+    if (!res.ok) throw new Error('Failed to fetch demo status');
+    return res.json();
+  },
+
+  async seedDemo(): Promise<any> {
+    const res = await fetch(`${API_BASE}/demo/seed`, { method: 'POST' });
+    if (!res.ok) throw new Error('Failed to seed demo data');
+    return res.json();
+  },
+
+  async resetDemo(): Promise<any> {
+    const res = await fetch(`${API_BASE}/demo/reset`, { method: 'POST' });
+    if (!res.ok) throw new Error('Failed to reset demo data');
+    return res.json();
   }
 };
 

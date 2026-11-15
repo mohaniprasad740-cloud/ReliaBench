@@ -14,7 +14,9 @@ import {
   HelpCircle,
   Clock,
   Layers,
-  ChevronDown
+  ChevronDown,
+  Database,
+  Sparkles
 } from 'lucide-react';
 import { LiquidCanvas } from '../components/ui/LiquidCanvas';
 
@@ -60,9 +62,10 @@ export const LandingPage: React.FC = () => {
         <div className="flex items-center gap-3">
           <Link
             to="/app"
-            className="reliabench-btn reliabench-btn-lime"
+            className="reliabench-btn reliabench-btn-lime flex items-center gap-2"
           >
-            <span>Open Dashboard</span>
+            <Sparkles size={14} />
+            <span>Explore Demo</span>
             <ArrowRight size={14} />
           </Link>
         </div>
@@ -107,6 +110,46 @@ export const LandingPage: React.FC = () => {
               <span>Understand the Methodology</span>
               <ChevronDown size={16} />
             </a>
+          </div>
+
+          {/* DEMO ENVIRONMENT HERO CARD */}
+          <div className="mb-12 p-6 bg-gradient-to-r from-[#1D211C] via-[#242A22] to-[#1D211C] border-2 border-[#C7D94C]/40 rounded shadow-xl relative overflow-hidden">
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+              <div className="space-y-2">
+                <div className="inline-flex items-center gap-2 px-2.5 py-0.5 bg-[#C7D94C]/10 border border-[#C7D94C]/30 text-[#C7D94C] text-xs font-mono font-bold uppercase tracking-wider rounded">
+                  <Database size={12} />
+                  <span>Production Demo Ready · Zero Config Required</span>
+                </div>
+                <h3 className="text-xl md:text-2xl font-black text-[#E8DDC8] tracking-tight">
+                  Explore Live Benchmark Telemetry & Agent Traces
+                </h3>
+                <p className="text-sm text-[#A7A393] max-w-2xl leading-relaxed">
+                  Demonstrate the complete platform instantly with <strong>4 canonical agents</strong>, <strong>14 benchmark tasks</strong> across 5 suites, <strong>32 multi-trial experiments</strong>, and <strong>160 verified ATIF v1.8 execution traces</strong>.
+                </p>
+                <div className="flex flex-wrap gap-4 pt-1 text-xs font-mono text-[#C49A55]">
+                  <span>✓ Wilson 95% CIs</span>
+                  <span>✓ Pass@k & Pass^k</span>
+                  <span>✓ 5 Failure Scenarios</span>
+                  <span>✓ Side-by-Side Comparisons</span>
+                </div>
+              </div>
+              <div className="flex flex-col sm:flex-row lg:flex-col gap-3 min-w-[200px]">
+                <Link
+                  to="/app"
+                  className="reliabench-btn reliabench-btn-lime text-center justify-center text-sm py-3 px-5 shadow-[3px_3px_0px_0px_#10120F]"
+                >
+                  <Sparkles size={15} />
+                  <span>Explore Demo</span>
+                </Link>
+                <Link
+                  to="/app/comparisons"
+                  className="reliabench-btn reliabench-btn-outline text-center justify-center text-xs py-2 px-4"
+                >
+                  <GitCompare size={14} />
+                  <span>Compare Agents</span>
+                </Link>
+              </div>
+            </div>
           </div>
 
           {/* HERO VISUALIZATION: REPEATED TRIAL MATRIX */}

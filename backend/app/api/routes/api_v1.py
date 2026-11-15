@@ -58,11 +58,21 @@ def health_check():
 
 
 @router.get("/dashboard/summary", response_model=DashboardSummary)
-def get_dashboard_summary(source_mode: Optional[str] = Query(None), db: Session = Depends(get_db)):
+def get_dashboard_summary(
+    source_mode: Optional[str] = Query(None),
+    is_demo: Optional[bool] = Query(None),
+    db: Session = Depends(get_db)
+):
     agents_query = db.query(Agent)
     benchmarks_query = db.query(BenchmarkTask)
     experiments_query = db.query(Experiment)
     runs_query = db.query(Run)
+
+    if is_demo is not None:
+        agents_query = agents_query.filter(Agent.is_demo == is_demo)
+        benchmarks_query = benchmarks_query.filter(BenchmarkTask.is_demo == is_demo)
+        experiments_query = experiments_query.filter(Experiment.is_demo == is_demo)
+        runs_query = runs_query.join(Experiment).filter(Experiment.is_demo == is_demo)
 
     if source_mode:
         agents_query = agents_query.filter(Agent.source_mode == source_mode)
@@ -163,8 +173,11 @@ def get_dashboard_summary(source_mode: Optional[str] = Query(None), db: Session 
 
 # ----------------- AGENT REGISTRY -----------------
 @router.get("/agents", response_model=List[AgentResponse])
-def list_agents(db: Session = Depends(get_db)):
-    return db.query(Agent).order_by(Agent.created_at.desc()).all()
+def list_agents(is_demo: Optional[bool] = Query(None), db: Session = Depends(get_db)):
+    q = db.query(Agent)
+    if is_demo is not None:
+        q = q.filter(Agent.is_demo == is_demo)
+    return q.order_by(Agent.created_at.desc()).all()
 
 @router.post("/agents", response_model=AgentResponse, status_code=201)
 def create_agent(agent_in: AgentCreate, db: Session = Depends(get_db)):
@@ -259,8 +272,11 @@ def delete_agent(agent_id: str, db: Session = Depends(get_db)):
 
 # ----------------- BENCHMARK TASK LIBRARY -----------------
 @router.get("/benchmarks", response_model=List[BenchmarkTaskResponse])
-def list_benchmarks(db: Session = Depends(get_db)):
-    return db.query(BenchmarkTask).order_by(BenchmarkTask.created_at.desc()).all()
+def list_benchmarks(is_demo: Optional[bool] = Query(None), db: Session = Depends(get_db)):
+    q = db.query(BenchmarkTask)
+    if is_demo is not None:
+        q = q.filter(BenchmarkTask.is_demo == is_demo)
+    return q.order_by(BenchmarkTask.created_at.desc()).all()
 
 @router.post("/benchmarks", response_model=BenchmarkTaskResponse, status_code=201)
 def create_benchmark(task_in: BenchmarkTaskCreate, db: Session = Depends(get_db)):
@@ -281,25 +297,10 @@ def get_benchmark(benchmark_id: str, db: Session = Depends(get_db)):
 @router.get("/failures")
 def list_failures(db: Session = Depends(get_db)):
     from app.faults.catalog import get_system_failure_catalog
-    # Return the supported system failure scenarios catalog
-    # Also combine with any custom DB failure scenarios if added by users
-    db_failures = db.query(FailureScenario).all()
-    if db_failures:
-        return [
-            {
-                "id": f.id,
-                "name": f.name,
-                "code": f.code,
-                "description": f.description,
-                "trigger_point": f.trigger_point,
-                "severity": f.severity,
-                "parameters": f.parameters,
-            }
-            for f in db_failures
-        ]
-    # Default: system catalog definitions
-    return [
-        {
+    catalog_entries = get_system_failure_catalog()
+    combined: Dict[str, Dict[str, Any]] = {}
+    for entry in catalog_entries:
+        combined[entry.code] = {
             "id": entry.id,
             "name": entry.name,
             "code": entry.code,
@@ -308,13 +309,29 @@ def list_failures(db: Session = Depends(get_db)):
             "severity": entry.severity,
             "parameters": entry.default_parameters,
         }
-        for entry in get_system_failure_catalog()
-    ]
+    db_failures = db.query(FailureScenario).all()
+    for f in db_failures:
+        if f.code in combined:
+            combined[f.code]["id"] = f.id
+        else:
+            combined[f.code] = {
+                "id": f.id,
+                "name": f.name,
+                "code": f.code,
+                "description": f.description,
+                "trigger_point": f.trigger_point,
+                "severity": f.severity,
+                "parameters": f.parameters,
+            }
+    return list(combined.values())
 
 # ----------------- EXPERIMENTS -----------------
 @router.get("/experiments", response_model=List[ExperimentResponse])
-def list_experiments(db: Session = Depends(get_db)):
-    return db.query(Experiment).order_by(Experiment.created_at.desc()).all()
+def list_experiments(is_demo: Optional[bool] = Query(None), db: Session = Depends(get_db)):
+    q = db.query(Experiment)
+    if is_demo is not None:
+        q = q.filter(Experiment.is_demo == is_demo)
+    return q.order_by(Experiment.created_at.desc()).all()
 
 @router.post("/experiments", response_model=ExperimentResponse, status_code=201)
 def create_experiment(exp_in: ExperimentCreate, db: Session = Depends(get_db)):
@@ -680,4 +697,46 @@ def test_tavily_integration():
 def test_bifrost_integration():
     bifrost_ad = BifrostAdapter()
     return bifrost_ad.get_status()
+
+
+# ----------------- DEMO ENVIRONMENT -----------------
+@router.get("/demo/status")
+def get_demo_status(db: Session = Depends(get_db)):
+    demo_agents = db.query(Agent).filter(Agent.is_demo == True).count()
+    demo_tasks = db.query(BenchmarkTask).filter(BenchmarkTask.is_demo == True).count()
+    demo_exps = db.query(Experiment).filter(Experiment.is_demo == True).count()
+    
+    exp_ids = [e.id for e in db.query(Experiment.id).filter(Experiment.is_demo == True).all()]
+    demo_trials = db.query(Trial).join(Run).filter(Run.experiment_id.in_(exp_ids)).count() if exp_ids else 0
+
+    is_seeded = demo_agents >= 4 and demo_exps >= 20
+
+    return {
+        "seeded": is_seeded,
+        "agents_count": demo_agents,
+        "tasks_count": demo_tasks,
+        "experiments_count": demo_exps,
+        "trials_count": demo_trials,
+        "mode": "DEMO_ENVIRONMENT",
+        "canonical_agents": [
+            "Atlas Research Agent",
+            "Nova Browser Agent",
+            "Sentinel Workflow Agent",
+            "Swift Assistant"
+        ]
+    }
+
+
+@router.post("/demo/seed")
+def seed_demo_endpoint(db: Session = Depends(get_db)):
+    from app.services.demo_seed import seed_demo_data
+    res = seed_demo_data(db, force_reset=False)
+    return res
+
+
+@router.post("/demo/reset")
+def reset_demo_endpoint(db: Session = Depends(get_db)):
+    from app.services.demo_seed import reset_demo_data
+    res = reset_demo_data(db)
+    return res
 

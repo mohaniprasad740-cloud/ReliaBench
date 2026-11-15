@@ -11,6 +11,10 @@ from app.api.routes.reliability import router as reliability_router
 try:
     Base.metadata.create_all(bind=engine)
     run_additive_migrations(engine)
+    import sys
+    if "pytest" not in sys.modules and not os.getenv("TESTING"):
+        from app.services.demo_seed import auto_seed_if_empty
+        auto_seed_if_empty(engine)
 except Exception as e:
     # On serverless cold starts or read-only pools, avoid crashing process
     pass

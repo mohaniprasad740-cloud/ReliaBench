@@ -75,6 +75,14 @@ def clean_demo_data(dry_run: bool = False) -> None:
         print(f"\n[CLEANUP COMPLETE] Removed demo DB records and {deleted_files} artifact files.")
 
 
+def seed_demo(force_reset: bool = False) -> None:
+    """Populates or resets the canonical Reliabench Demo dataset."""
+    from app.services.demo_seed import seed_demo_data
+    with SessionLocal() as db:
+        res = seed_demo_data(db, force_reset=force_reset)
+        print(f"[DEMO SEED] Result: {res}")
+
+
 def main():
     parser = argparse.ArgumentParser(description="Reliabench Management CLI")
     subparsers = parser.add_subparsers(dest="command")
@@ -82,10 +90,19 @@ def main():
     clean_parser = subparsers.add_parser("clean-demo-data", help="Clean synthetic demo records and mock artifacts")
     clean_parser.add_argument("--dry-run", action="store_true", help="Report records without deleting")
 
+    seed_parser = subparsers.add_parser("seed-demo", help="Seed the canonical demo dataset")
+    seed_parser.add_argument("--force-reset", action="store_true", help="Clean and re-seed from scratch")
+
+    reset_parser = subparsers.add_parser("reset-demo", help="Reset and re-seed the demo dataset")
+
     args = parser.parse_args()
 
     if args.command == "clean-demo-data":
         clean_demo_data(dry_run=args.dry_run)
+    elif args.command == "seed-demo":
+        seed_demo(force_reset=args.force_reset)
+    elif args.command == "reset-demo":
+        seed_demo(force_reset=True)
     else:
         parser.print_help()
 

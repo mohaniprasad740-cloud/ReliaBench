@@ -37,7 +37,19 @@ export const DashboardPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [sourceFilter, setSourceFilter] = useState<string>('ALL');
+  const [seedingDemo, setSeedingDemo] = useState(false);
   const { startTour } = useGuidedTour();
+
+  const handleSeedDemo = async () => {
+    setSeedingDemo(true);
+    try {
+      await api.seedDemo();
+      window.location.reload();
+    } catch (err: any) {
+      alert(`Demo seeding failed: ${err.message}`);
+      setSeedingDemo(false);
+    }
+  };
 
   useEffect(() => {
     api.getHealth().then(setHealth).catch(() => {});
@@ -89,7 +101,15 @@ export const DashboardPage: React.FC = () => {
             No agents registered and no experiments executed yet. Begin by registering an agent, exploring benchmark tasks, or taking the guided product tour.
           </p>
 
-          <div className="flex gap-3 mb-8">
+          <div className="flex flex-wrap justify-center gap-3 mb-8">
+            <button
+              onClick={handleSeedDemo}
+              disabled={seedingDemo}
+              className="reliabench-btn reliabench-btn-lime flex items-center gap-2 cursor-pointer disabled:opacity-50"
+            >
+              <Database size={15} />
+              <span>{seedingDemo ? 'Populating Demo...' : 'Load Demo Workspace'}</span>
+            </button>
             <button
               onClick={() => startTour(0)}
               className="reliabench-btn reliabench-btn-persimmon flex items-center gap-2 cursor-pointer"
@@ -229,6 +249,24 @@ export const DashboardPage: React.FC = () => {
             Real Verified Runs
           </button>
         </div>
+        </div>
+      </div>
+
+      {/* Demo Environment Active Banner */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 px-4 py-2.5 bg-[#2B231D]/80 border border-[#5E3F2A] rounded font-mono text-xs text-[#E8DDC8]">
+        <div className="flex items-center gap-2.5">
+          <Database size={14} className="text-[#F06B45] shrink-0" />
+          <span>
+            <strong className="text-[#F06B45]">DEMO ENVIRONMENT:</strong> Pre-populated with 4 canonical agents, 14 benchmark tasks, and 32 multi-trial experiments for product evaluation.
+          </span>
+        </div>
+        <div className="flex items-center gap-3 shrink-0">
+          <Link to="/app/comparisons" className="text-[#C7D94C] hover:underline font-bold">
+            Compare Agents →
+          </Link>
+          <Link to="/app/reports" className="text-[#A7A393] hover:text-[#E8DDC8]">
+            View Reports →
+          </Link>
         </div>
       </div>
 

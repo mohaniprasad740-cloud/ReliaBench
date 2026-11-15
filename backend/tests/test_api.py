@@ -18,6 +18,8 @@ def test_health_check():
 
 def test_dashboard_summary_clean_state():
     """On a clean installation with no experiments run, counts are 0 and rates are null."""
+    from app.cli import clean_demo_data
+    clean_demo_data(dry_run=False)
     res = client.get("/api/v1/dashboard/summary")
     assert res.status_code == 200
     data = res.json()
